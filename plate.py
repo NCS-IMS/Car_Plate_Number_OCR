@@ -3,8 +3,6 @@ import imutils
 import numpy as np
 import pytesseract
 import threading
-import requests
-
 from PIL import Image
 from picamera.array import PiRGBArray
 from picamera import PiCamera
@@ -14,13 +12,13 @@ camera.framerate = 30
 rawCapture = PiRGBArray(camera, size=(640, 480))
 pts = np.zeros((4,2), dtype=np.float32)
 
-car_cascade = cv2.CascadeClassifier('./cars.xml')
 
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
     image = frame.array
     cv2.imshow("Frame", image)
     key = cv2.waitKey(1) & 0xFF
     rawCapture.truncate(0)
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.bilateralFilter(gray, 11, 17, 17)
     edged = cv2.Canny(gray, 30, 200)
@@ -108,14 +106,5 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             result_text += text[i]
     
     print(result_text)
-    
-    info = {
-        "id" : 1,
-        "carNum": result_text
-        }
-    
-    response = requests.get("http://conative.myds.me:43042/breaker/searchCarNum", params=info)
-    json = response.json()
-    print(json['result'])
         
 cv2.destroyAllWindows()
