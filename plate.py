@@ -10,6 +10,8 @@ import paho.mqtt.client as mqtt
 import json
 import unicodedata
 import threading
+import time
+import RPi.GPIO as GPIO
 
 from PIL import Image
 from picamera.array import PiRGBArray
@@ -35,6 +37,7 @@ def startThread():
     global thread
     global getFlag
     global resData
+    global servo
     
     client = mqtt.Client()
 
@@ -51,9 +54,24 @@ def startThread():
             getFlag = False
         else:
             pass
+def pwmControl():
+    
+    servo.ChangeDutyCycle(7.5)
+    time.sleep(3)
+    servo.ChangeDutyCycle(2.5)
             
 try:
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    
+    SERVO_PIN = 18
+    GPIO.setup(SERVO_PIN, GPIO.OUT)
+    servo = GPIO.PWM(SERVO_PIN, 50)
+    servo.start(0)
+    
     thread = ""
+    
+    thread2 = ""
     getFlag = False
     resData = []
     thread = threading.Thread(target= startThread, args=())
@@ -172,7 +190,9 @@ try:
             response = requests.get("http://conative.myds.me:43042/breaker/searchCarNum", params=info)
  
             json = response.json()
-            if json['result'] == True: 
+            if json['result'] == True:
+                thread2 = threading.Thread(target= pwmControl, args=())
+                thread2.start()
                 getFlag = True
                 resData = []
                 resultData = json['emMan']['result']
@@ -182,6 +202,9 @@ try:
                 getFlag = False
         
 except KeyboardInterrupt:
+    servo.stop()
+    GPIO.cleanup()
     cv2.destroyAllWindows()
-    
+
+GPIO.cleanup()
 cv2.destroyAllWindows()
