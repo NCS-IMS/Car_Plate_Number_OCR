@@ -38,9 +38,8 @@ def startThread():
     global getFlag
     global resData
     global servo
+    global client
     
-    client = mqtt.Client()
-
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
     client.on_publish = on_publish
@@ -55,12 +54,13 @@ def startThread():
         else:
             pass
 def pwmControl():
-    
     servo.ChangeDutyCycle(7.5)
     time.sleep(3)
     servo.ChangeDutyCycle(2.5)
+    #client.publish('test', "close", 2)
             
 try:
+    client = mqtt.Client()
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
     
@@ -197,7 +197,7 @@ try:
                 resData = []
                 resultData = json['emMan']['result']
                 for rd in resultData:
-                    resData.append(unicodedata.normalize('NFKD',rd["uuid"]).encode('ascii', 'ignore'))
+                    resData.append(unicodedata.normalize('NFKD',rd["uuid"].replace("-","")).encode('ascii', 'ignore'))
             else:
                 getFlag = False
         
